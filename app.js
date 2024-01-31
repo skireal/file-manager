@@ -7,4 +7,17 @@ if (usernameFlagIndex === -1) {
 }
 
 const username = commandLineArgs[usernameFlagIndex].split('=')[1];
-console.log(`Welcome to the File Manager, ${username}!`);
+const exitMessage = `Thank you for using File Manager, ${username}, goodbye!`;
+const welcomeMessage = `Welcome to the File Manager, ${username}!`;
+console.log(welcomeMessage);
+
+process.stdin.resume();
+
+process.on('SIGINT', () => {
+  console.log(exitMessage);
+  process.exit(0);
+});
+
+process.on('exit', () => {
+  console.log(exitMessage);
+});
