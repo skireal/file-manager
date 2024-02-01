@@ -1,23 +1,41 @@
-const commandLineArgs = process.argv.slice(2);
-const usernameFlagIndex = commandLineArgs.findIndex((arg) => arg.startsWith('--username'));
+import * as readline from 'node:readline';
+import { stdin as input, stdout as output } from 'node:process';
+import * as userService from './services/userService.mjs';
 
-if (usernameFlagIndex === -1) {
-  console.error('Please provide a valid username using --username argument.');
-  process.exit(1);
-}
+const printCurrentWorkingDirectory = () => {
+  const cwd = process.cwd();
+  console.log(`You are currently in ${cwd}`);
+};
 
-const username = commandLineArgs[usernameFlagIndex].split('=')[1];
-const exitMessage = `Thank you for using File Manager, ${username}, goodbye!`;
-const welcomeMessage = `Welcome to the File Manager, ${username}!`;
-console.log(welcomeMessage);
+const handleUserInput = (input, username, rl) => {
+  printCurrentWorkingDirectory();
+  if (input === '.exit') {
+    console.log(userService.exitMessage(username));
+    rl.close();
+  }
+};
 
-process.stdin.resume();
+const main = async () => {
+  const commandLineArgs = process.argv.slice(2);
+  const username = userService.getUsernameFromCommandLineArgs(commandLineArgs);
 
-process.on('SIGINT', () => {
-  console.log(exitMessage);
-  process.exit(0);
-});
+  console.log(userService.welcomeMessage(username));
+  printCurrentWorkingDirectory();
 
-process.on('exit', () => {
-  console.log(exitMessage);
-});
+  const rl = readline.createInterface({ input, output });
+
+  rl.on('line', (input) => {
+    handleUserInput(input, username, rl);
+  });
+
+  rl.on('SIGINT', () => {
+    console.log(userService.exitMessage(username));
+    rl.close();
+  });
+
+  rl.on('close', () => {
+    process.exit(0);
+  });
+};
+
+main();
