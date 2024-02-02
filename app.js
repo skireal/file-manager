@@ -1,31 +1,28 @@
 import * as readline from 'node:readline';
-import { stdin as input, stdout as output } from 'node:process';
+import { stdin as input, stdout as output, chdir } from 'node:process';
 import * as userService from './services/userService.mjs';
+import * as inputHandler from './services/inputHandler.mjs';
+import * as fileService from './services/fileService.mjs';
+import os from 'node:os';
 
-const printCurrentWorkingDirectory = () => {
-  const cwd = process.cwd();
-  console.log(`You are currently in ${cwd}`);
-};
-
-const handleUserInput = (input, username, rl) => {
-  printCurrentWorkingDirectory();
-  if (input === '.exit') {
-    console.log(userService.exitMessage(username));
-    rl.close();
-  }
+const setInitialWorkingDirectory = () => {
+  const homeDirectory = os.homedir();
+  chdir(homeDirectory);
 };
 
 const main = async () => {
+  setInitialWorkingDirectory();
+
   const commandLineArgs = process.argv.slice(2);
   const username = userService.getUsernameFromCommandLineArgs(commandLineArgs);
 
   console.log(userService.welcomeMessage(username));
-  printCurrentWorkingDirectory();
+  fileService.printCurrentWorkingDirectory();
 
   const rl = readline.createInterface({ input, output });
 
   rl.on('line', (input) => {
-    handleUserInput(input, username, rl);
+    inputHandler.handleUserInput(input, username, rl);
   });
 
   rl.on('SIGINT', () => {
