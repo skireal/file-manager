@@ -3,4 +3,5 @@ export const commandsMinArgsRequirements = {
   cat: 1,
   add: 1,
   rn: 2,
+  cp: 2,
 };

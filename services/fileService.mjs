@@ -1,18 +1,16 @@
 import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
-import { existsSync, createReadStream } from 'node:fs';
+import { existsSync, createReadStream, createWriteStream } from 'node:fs';
 import { readdir, writeFile, rename } from 'node:fs/promises';
 
 export const printCurrentWorkingDirectory = () => {
-  const currentDir = cwd();
-  console.log(`You are currently in ${currentDir}`);
+  console.log(`You are currently in ${cwd()}`);
 };
 
 export const goUpper = () => {
-  const currentDir = cwd();
-  const parentDir = dirname(currentDir);
+  const parentDir = dirname(cwd());
 
-  if (currentDir === parentDir) {
+  if (cwd() === parentDir) {
     console.log('You are already in the root directory. Cannot go up.');
     return;
   }
@@ -21,8 +19,7 @@ export const goUpper = () => {
 };
 
 export const changeDirectory = (path) => {
-  const currentDir = cwd();
-  const newPath = isAbsolute(path) ? path : resolve(currentDir, path);
+  const newPath = isAbsolute(path) ? path : resolve(cwd(), path);
 
   if (existsSync(newPath)) {
     chdir(newPath);
@@ -32,8 +29,7 @@ export const changeDirectory = (path) => {
 };
 
 export const listFiles = async () => {
-  const currentDir = cwd();
-  const filesAndFolders = await readdir(currentDir, { withFileTypes: true });
+  const filesAndFolders = await readdir(cwd(), { withFileTypes: true });
 
   const dataForTable = [];
 
@@ -53,7 +49,8 @@ export const listFiles = async () => {
 };
 
 export const readFile = (filePath) => {
-  const absoluteFilePath = join(cwd(), filePath);
+  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
+  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
   const readStream = createReadStream(absoluteFilePath, 'utf8');
 
   readStream.on('data', (chunk) => {
@@ -70,13 +67,33 @@ export const createFile = async (fileName) => {
   await writeFile(absoluteFilePath, '', 'utf8');
 };
 
-export const renameFile = async (currentPath, newName) => {
+export const renameFile = async (filePath, newName) => {
+  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
   try {
-    const currentFilePath = join(cwd(), currentPath);
-    const fileDirectory = dirname(currentFilePath);
+    const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+    const fileDirectory = dirname(absoluteFilePath);
     const newFilePath = join(fileDirectory, newName);
-    await rename(currentFilePath, newFilePath);
+    await rename(absoluteFilePath, newFilePath);
   } catch {
     console.error('Operation failed');
   }
+};
+
+export const copyFile = async (filePath, targetDir) => {
+  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
+  targetDir = targetDir.startsWith('\\') ? targetDir.substring(1) : targetDir;
+
+  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+  const absoluteTargetDir = isAbsolute(targetDir) ? targetDir : join(cwd(), targetDir);
+
+  const fileName = absoluteFilePath.split('\\').pop();
+  const targetFilePath = join(absoluteTargetDir, fileName);
+
+  const readStream = createReadStream(absoluteFilePath);
+  const writeStream = createWriteStream(targetFilePath);
+
+  readStream.pipe(writeStream);
+
+  readStream.on('error', () => console.error('Operation failed'));
+  writeStream.on('error', () => console.error('Operation failed'));
 };
