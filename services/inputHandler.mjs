@@ -1,15 +1,12 @@
 import * as userService from './userService.mjs';
 import * as fileService from './fileService.mjs';
-
-const commandsMinArgsRequirements = {
-  cd: 1,
-};
+import { commandsMinArgsRequirements } from '../constants/common.js';
 
 export const handleUserInput = (input, username, rl) => {
   const [command, ...args] = input.trim().split(' ');
 
-  if (!command || (commandsMinArgsRequirements[command] && args.length < commandsMinArgsRequirements[command])) {
-    console.log('Invalid input');
+  if (!command || args.length < commandsMinArgsRequirements[command]) {
+    console.error('Invalid input');
     fileService.printCurrentWorkingDirectory();
     return;
   }
@@ -28,8 +25,11 @@ export const handleUserInput = (input, username, rl) => {
     case 'ls':
       fileService.listFiles();
       break;
+    case 'cat':
+      fileService.readFile(args[0]);
+      break;
     default:
-      console.log('Invalid input');
+      console.error('Invalid input');
   }
 
   fileService.printCurrentWorkingDirectory();

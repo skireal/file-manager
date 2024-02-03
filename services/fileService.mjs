@@ -1,6 +1,6 @@
-import { dirname, resolve, isAbsolute } from 'node:path';
+import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
-import { existsSync } from 'node:fs';
+import { existsSync, createReadStream } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 
 export const printCurrentWorkingDirectory = () => {
@@ -27,7 +27,7 @@ export const changeDirectory = (path) => {
   if (existsSync(newPath)) {
     chdir(newPath);
   } else {
-    console.log('Operation failed.');
+    console.error('Operation failed');
   }
 };
 
@@ -50,4 +50,17 @@ export const listFiles = async () => {
   });
 
   console.table(dataForTable);
+};
+
+export const readFile = (filePath) => {
+  const absoluteFilePath = join(cwd(), filePath);
+  const readStream = createReadStream(absoluteFilePath, 'utf8');
+
+  readStream.on('data', (chunk) => {
+    console.log(chunk);
+  });
+
+  readStream.on('error', () => {
+    console.error('Operation failed');
+  });
 };
