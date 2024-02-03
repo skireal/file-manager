@@ -1,7 +1,7 @@
 import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
 import { existsSync, createReadStream } from 'node:fs';
-import { readdir, writeFile } from 'node:fs/promises';
+import { readdir, writeFile, rename } from 'node:fs/promises';
 
 export const printCurrentWorkingDirectory = () => {
   const currentDir = cwd();
@@ -68,4 +68,15 @@ export const readFile = (filePath) => {
 export const createFile = async (fileName) => {
   const absoluteFilePath = join(cwd(), fileName);
   await writeFile(absoluteFilePath, '', 'utf8');
+};
+
+export const renameFile = async (currentPath, newName) => {
+  try {
+    const currentFilePath = join(cwd(), currentPath);
+    const fileDirectory = dirname(currentFilePath);
+    const newFilePath = join(fileDirectory, newName);
+    await rename(currentFilePath, newFilePath);
+  } catch {
+    console.error('Operation failed');
+  }
 };
