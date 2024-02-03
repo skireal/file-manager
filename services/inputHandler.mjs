@@ -28,6 +28,9 @@ export const handleUserInput = (input, username, rl) => {
     case 'cat':
       fileService.readFile(args[0]);
       break;
+    case 'add':
+      fileService.createFile(args[0]);
+      break;
     default:
       console.error('Invalid input');
   }

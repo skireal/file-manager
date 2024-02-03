@@ -1,7 +1,7 @@
 import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
 import { existsSync, createReadStream } from 'node:fs';
-import { readdir } from 'node:fs/promises';
+import { readdir, writeFile } from 'node:fs/promises';
 
 export const printCurrentWorkingDirectory = () => {
   const currentDir = cwd();
@@ -63,4 +63,9 @@ export const readFile = (filePath) => {
   readStream.on('error', () => {
     console.error('Operation failed');
   });
+};
+
+export const createFile = async (fileName) => {
+  const absoluteFilePath = join(cwd(), fileName);
+  await writeFile(absoluteFilePath, '', 'utf8');
 };
