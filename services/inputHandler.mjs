@@ -40,6 +40,9 @@ export const handleUserInput = (input, username, rl) => {
     case 'mv':
       fileService.moveFile(args[0], args[1]);
       break;
+    case 'rm':
+      fileService.deleteFile(args[0]);
+      break;
     default:
       console.error('Invalid input');
   }

@@ -92,8 +92,8 @@ export const copyFile = async (filePath, targetDir) => {
     const readStream = createReadStream(absoluteFilePath);
     const writeStream = createWriteStream(targetFilePath);
 
-    readStream.on('error', () => reject(new Error('Operation failed ййй')));
-    writeStream.on('error', () => reject(new Error('Operation failed ссм')));
+    readStream.on('error', () => reject(new Error('Operation failed')));
+    writeStream.on('error', () => reject(new Error('Operation failed')));
     writeStream.on('finish', () => resolve());
 
     readStream.pipe(writeStream);
@@ -104,4 +104,14 @@ export const moveFile = async (filePath, targetDir) => {
   await copyFile(filePath, targetDir);
   const absoluteFilePath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath);
   await unlink(absoluteFilePath);
+};
+
+export const deleteFile = async (filePath) => {
+  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
+  try {
+    const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+    await unlink(absoluteFilePath);
+  } catch {
+    console.error('Operation failed');
+  }
 };
