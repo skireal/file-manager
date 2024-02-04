@@ -37,6 +37,9 @@ export const handleUserInput = (input, username, rl) => {
     case 'cp':
       fileService.copyFile(args[0], args[1]);
       break;
+    case 'mv':
+      fileService.moveFile(args[0], args[1]);
+      break;
     default:
       console.error('Invalid input');
   }

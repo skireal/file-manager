@@ -1,7 +1,7 @@
 import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
 import { existsSync, createReadStream, createWriteStream } from 'node:fs';
-import { readdir, writeFile, rename } from 'node:fs/promises';
+import { readdir, writeFile, rename, unlink } from 'node:fs/promises';
 
 export const printCurrentWorkingDirectory = () => {
   console.log(`You are currently in ${cwd()}`);
@@ -83,17 +83,25 @@ export const copyFile = async (filePath, targetDir) => {
   filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
   targetDir = targetDir.startsWith('\\') ? targetDir.substring(1) : targetDir;
 
-  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
-  const absoluteTargetDir = isAbsolute(targetDir) ? targetDir : join(cwd(), targetDir);
-
+  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath);
+  const absoluteTargetDir = isAbsolute(targetDir) ? targetDir : join(process.cwd(), targetDir);
   const fileName = absoluteFilePath.split('\\').pop();
   const targetFilePath = join(absoluteTargetDir, fileName);
 
-  const readStream = createReadStream(absoluteFilePath);
-  const writeStream = createWriteStream(targetFilePath);
+  return new Promise((resolve, reject) => {
+    const readStream = createReadStream(absoluteFilePath);
+    const writeStream = createWriteStream(targetFilePath);
 
-  readStream.pipe(writeStream);
+    readStream.on('error', () => reject(new Error('Operation failed ййй')));
+    writeStream.on('error', () => reject(new Error('Operation failed ссм')));
+    writeStream.on('finish', () => resolve());
 
-  readStream.on('error', () => console.error('Operation failed'));
-  writeStream.on('error', () => console.error('Operation failed'));
+    readStream.pipe(writeStream);
+  });
+};
+
+export const moveFile = async (filePath, targetDir) => {
+  await copyFile(filePath, targetDir);
+  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath);
+  await unlink(absoluteFilePath);
 };
