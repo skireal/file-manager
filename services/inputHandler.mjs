@@ -1,6 +1,24 @@
 import * as userService from './userService.mjs';
 import * as fileService from './fileService.mjs';
+import * as osService from './osService.mjs';
 import { commandsMinArgsRequirements } from '../constants/common.js';
+
+const commandActions = {
+  '.exit': (_, username, rl) => {
+    console.log(userService.exitMessage(username));
+    rl.close();
+  },
+  up: () => fileService.goUpper(),
+  cd: (args) => fileService.changeDirectory(args[0]),
+  ls: () => fileService.listFiles(),
+  cat: (args) => fileService.readFile(args[0]),
+  add: (args) => fileService.createFile(args[0]),
+  rn: (args) => fileService.renameFile(args[0], args[1]),
+  cp: (args) => fileService.copyFile(args[0], args[1]),
+  mv: (args) => fileService.moveFile(args[0], args[1]),
+  rm: (args) => fileService.deleteFile(args[0]),
+  os: (args) => osService.handleOSCommand(args[0]),
+};
 
 export const handleUserInput = (input, username, rl) => {
   const [command, ...args] = input.trim().split(' ');
@@ -11,40 +29,11 @@ export const handleUserInput = (input, username, rl) => {
     return;
   }
 
-  switch (command) {
-    case '.exit':
-      console.log(userService.exitMessage(username));
-      rl.close();
-      break;
-    case 'up':
-      fileService.goUpper();
-      break;
-    case 'cd':
-      fileService.changeDirectory(args[0]);
-      break;
-    case 'ls':
-      fileService.listFiles();
-      break;
-    case 'cat':
-      fileService.readFile(args[0]);
-      break;
-    case 'add':
-      fileService.createFile(args[0]);
-      break;
-    case 'rn':
-      fileService.renameFile(args[0], args[1]);
-      break;
-    case 'cp':
-      fileService.copyFile(args[0], args[1]);
-      break;
-    case 'mv':
-      fileService.moveFile(args[0], args[1]);
-      break;
-    case 'rm':
-      fileService.deleteFile(args[0]);
-      break;
-    default:
-      console.error('Invalid input');
+  const action = commandActions[command];
+  if (action) {
+    action(args, username, rl);
+  } else {
+    console.error('Invalid input');
   }
 
   fileService.printCurrentWorkingDirectory();
