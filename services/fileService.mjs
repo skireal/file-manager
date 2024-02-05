@@ -2,6 +2,7 @@ import { dirname, resolve, isAbsolute, join } from 'node:path';
 import { cwd, chdir } from 'node:process';
 import { existsSync, createReadStream, createWriteStream } from 'node:fs';
 import { readdir, writeFile, rename, unlink } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
 
 export const printCurrentWorkingDirectory = () => {
   console.log(`You are currently in ${cwd()}`);
@@ -30,7 +31,6 @@ export const changeDirectory = (path) => {
 
 export const listFiles = async () => {
   const filesAndFolders = await readdir(cwd(), { withFileTypes: true });
-
   const dataForTable = [];
 
   filesAndFolders.forEach((dirent) => {
@@ -49,8 +49,7 @@ export const listFiles = async () => {
 };
 
 export const readFile = (filePath) => {
-  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
-  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+  const absoluteFilePath = normalizePath(filePath);
   const readStream = createReadStream(absoluteFilePath, 'utf8');
 
   readStream.on('data', (chunk) => {
@@ -68,9 +67,8 @@ export const createFile = async (fileName) => {
 };
 
 export const renameFile = async (filePath, newName) => {
-  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
   try {
-    const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+    const absoluteFilePath = normalizePath(filePath);
     const fileDirectory = dirname(absoluteFilePath);
     const newFilePath = join(fileDirectory, newName);
     await rename(absoluteFilePath, newFilePath);
@@ -80,38 +78,38 @@ export const renameFile = async (filePath, newName) => {
 };
 
 export const copyFile = async (filePath, targetDir) => {
-  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
-  targetDir = targetDir.startsWith('\\') ? targetDir.substring(1) : targetDir;
+  try {
+    const absoluteFilePath = normalizePath(filePath);
+    const absoluteTargetDir = normalizePath(targetDir);
+    const fileName = absoluteFilePath.split('\\').pop();
+    const targetFilePath = join(absoluteTargetDir, fileName);
 
-  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath);
-  const absoluteTargetDir = isAbsolute(targetDir) ? targetDir : join(process.cwd(), targetDir);
-  const fileName = absoluteFilePath.split('\\').pop();
-  const targetFilePath = join(absoluteTargetDir, fileName);
-
-  return new Promise((resolve, reject) => {
-    const readStream = createReadStream(absoluteFilePath);
-    const writeStream = createWriteStream(targetFilePath);
-
-    readStream.on('error', () => reject(new Error('Operation failed')));
-    writeStream.on('error', () => reject(new Error('Operation failed')));
-    writeStream.on('finish', () => resolve());
-
-    readStream.pipe(writeStream);
-  });
+    await pipeline(createReadStream(absoluteFilePath), createWriteStream(targetFilePath));
+  } catch (error) {
+    console.error('Operation failed');
+  }
 };
 
 export const moveFile = async (filePath, targetDir) => {
-  await copyFile(filePath, targetDir);
-  const absoluteFilePath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath);
-  await unlink(absoluteFilePath);
+  try {
+    await copyFile(filePath, targetDir);
+    const absoluteFilePath = normalizePath(filePath);
+    await unlink(absoluteFilePath);
+  } catch (error) {
+    console.error('Operation failed');
+  }
 };
 
 export const deleteFile = async (filePath) => {
-  filePath = filePath.startsWith('\\') ? filePath.substring(1) : filePath;
   try {
-    const absoluteFilePath = isAbsolute(filePath) ? filePath : join(cwd(), filePath);
+    const absoluteFilePath = normalizePath(filePath);
     await unlink(absoluteFilePath);
   } catch {
     console.error('Operation failed');
   }
 };
+
+function normalizePath(path) {
+  const normalizedPath = path.startsWith('\\') ? path.substring(1) : path;
+  return isAbsolute(normalizedPath) ? normalizedPath : join(cwd(), normalizedPath);
+}
